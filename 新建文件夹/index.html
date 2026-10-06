@@ -1,0 +1,1491 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>一步一走 - 泽禹的失忆之旅</title>
+    <style>
+        :root {
+            --primary-green: #2ecc71;
+            --dark-green: #27ae60;
+            --bg-color: #1a1a1a;
+            --card-bg: #2c2c2c;
+            --text-color: #e0e0e0;
+            --text-muted: #888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 模拟手机屏幕 */
+        #app {
+            width: 100%;
+            max-width: 430px;
+            height: 100vh;
+            height: 100dvh;
+            background-color: var(--bg-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* 开场封面动画 */
+        #cover-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000 url('无标题1230_20261004194548.png') center/contain no-repeat;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease;
+        }
+        #cover-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #cover-screen h1 {
+            font-size: 2.5rem;
+            color: #fff;
+            letter-spacing: 5px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1.5s forwards 0.5s;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.8);
+        }
+        #cover-screen p {
+            margin-top: 10px;
+            color: var(--primary-green);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            opacity: 0;
+            animation: fadeInUp 1.5s forwards 1.2s;
+        }
+        #cover-screen .cover-hint {
+            position: absolute;
+            bottom: 46px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.85);
+            letter-spacing: 4px;
+            font-size: 0.85rem;
+            animation: hintBlink 1.8s infinite;
+        }
+        @keyframes hintBlink { 0%,100% { opacity: .3; } 50% { opacity: .9; } }
+
+        /* 故事内通用图片（手机自适应） */
+        .story-img {
+            width: 100%;
+            display: block;
+            border-radius: 10px;
+            margin: 12px 0;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+        }
+
+        /* BGM 开关按钮 */
+        #music-toggle {
+            position: absolute;
+            top: 11px;
+            right: 12px;
+            z-index: 35;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--dark-green);
+            background: rgba(26,26,26,0.85);
+            color: var(--primary-green);
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #music-toggle.playing { box-shadow: 0 0 10px rgba(46,204,113,0.7); }
+
+        /* ===== 真实手机弹窗（微信对话列表样式） ===== */
+        .phone-mock {
+            width: 100%;
+            max-width: 330px;
+            margin: 14px auto;
+            background: #111;
+            border-radius: 34px;
+            padding: 12px 10px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.55);
+        }
+        .phone-screen {
+            position: relative;
+            height: 500px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #ededed;
+        }
+        .phone-status {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 20px;
+            font-size: 12px;
+            background: #f7f7f7;
+        }
+        .pm-page {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 28px; /* 让出顶部时间状态栏 */
+            display: flex;
+            flex-direction: column;
+        }
+        .pm-home-page {
+            z-index: 1;
+            background: linear-gradient(160deg, #3a5a4a, #1c2b23);
+        }
+        .pm-apps {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding-top: 70px;
+        }
+        .pm-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .pm-app:active { transform: scale(0.92); }
+        .pm-app-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .pm-sub-page {
+            z-index: 2;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            background: #ededed;
+        }
+        .pm-sub-page.show { transform: translateX(0); }
+        .pm-app-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            font-weight: 600;
+            background: #f7f7f7;
+            border-bottom: 1px solid #e2e2e2;
+        }
+        .pm-back {
+            font-size: 28px;
+            line-height: 0.9;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+        .pm-sys-note {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            padding: 7px 10px;
+        }
+        .pm-chat-list { flex: 1; overflow-y: auto; background: #fff; }
+        .pm-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .pm-row:active { background: #e9e9e9; }
+        .pm-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .pm-row-text { flex: 1; min-width: 0; }
+        .pm-name { font-size: 15px; color: #111; }
+        .pm-preview {
+            font-size: 12px;
+            color: #999;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .pm-bubbles {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .pm-b {
+            max-width: 78%;
+            padding: 8px 11px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.55;
+            word-wrap: break-word;
+        }
+        .pm-b.l { background: #fff; align-self: flex-start; }
+        .pm-b.r { background: #95ec69; align-self: flex-end; }
+
+        /* 顶部状态栏 (模拟左上角实时显示地点) */
+        #status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 52px 15px 20px;
+            font-size: 0.9rem;
+            color: var(--primary-green);
+            border-bottom: 1px solid #333;
+            background: rgba(26, 26, 26, 0.9);
+            z-index: 10;
+        }
+        #status-bar .location {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        #status-bar .location::before {
+            content: '📍';
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+        #status-bar .progress {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* 任务栏（从旁边弹出的文字框） */
+        #task-bar {
+            position: absolute;
+            top: 62px;
+            left: 0;
+            z-index: 15;
+            max-width: 78%;
+            background-color: rgba(20, 30, 24, 0.95);
+            border: 1px solid var(--primary-green);
+            border-left: none;
+            box-shadow: 0 0 8px rgba(46,204,113,0.25), inset 0 0 12px rgba(46,204,113,0.08);
+            padding: 10px 15px;
+            font-size: 0.85rem;
+            border-radius: 0 8px 8px 0;
+            transform: translateX(-105%);
+            transition: transform 0.35s ease;
+        }
+        #task-bar.active {
+            transform: translateX(0);
+        }
+
+        /* 内容滚动区 */
+        #content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px;
+            line-height: 1.6;
+            font-size: 1rem;
+            scroll-behavior: smooth;
+        }
+        #content p {
+            margin-bottom: 15px;
+            text-indent: 2em;
+        }
+
+        /* 选项/按钮区域 */
+        #choices {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            background: linear-gradient(to top, rgba(26,26,26,1) 70%, rgba(26,26,26,0));
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 20;
+        }
+        .choice-btn {
+            background-color: var(--card-bg);
+            color: var(--primary-green);
+            border: 1px solid var(--dark-green);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .choice-btn:hover {
+            background-color: var(--primary-green);
+            color: #fff;
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+        .choice-btn.locked {
+            opacity: 0.5;
+            pointer-events: none;
+            border-color: #555;
+            color: #555;
+        }
+
+        /* 线索栏 (侧面) */
+        #clue-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-green);
+            color: #fff;
+            writing-mode: vertical-rl;
+            padding: 15px 5px;
+            border-radius: 5px 0 0 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 30;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+        }
+        
+        /* 线索弹窗 */
+        #clue-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        #clue-modal.active {
+            display: flex;
+        }
+        .clue-content {
+            background: var(--card-bg);
+            width: 100%;
+            height: 70%;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .clue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .clue-header h3 {
+            color: var(--primary-green);
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .clue-item {
+            background: #383838;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--primary-green);
+        }
+
+        /* 特殊元素样式 */
+        .image-placeholder {
+            width: 100%;
+            height: 150px;
+            background-color: #444;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #aaa;
+            margin: 10px 0;
+            font-size: 0.8rem;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .phone-chat {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .chat-msg {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .chat-msg.left {
+            background: #333;
+            align-self: flex-start;
+        }
+        .chat-msg.right {
+            background: var(--dark-green);
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .chat-msg.sys {
+            text-align: center;
+            background: none;
+            color: #888;
+            font-size: 0.75rem;
+            max-width: 100%;
+        }
+
+        /* 可播放的视频框 */
+        .video-box video {
+            width: 100%;
+            border-radius: 10px;
+            background: #000;
+            display: block;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+        }
+        .video-tip {
+            text-indent: 0;
+            font-size: 0.75rem;
+            color: #e0a060;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        /* 可点击的录音文件条目 */
+        .audio-file {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .audio-file:active { background: #444; transform: scale(0.99); }
+
+        /* 物品展示区：内容多时可上下滑动 */
+        #item-view {
+            max-height: 58vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        /* 小象肚子里藏着的纸条（先露出一角，点击抽出） */
+        .elephant-note {
+            overflow: hidden;
+            max-height: 30px; /* 默认露出纸条一角 */
+            opacity: 1;
+            transition: max-height 0.5s ease;
+            background: #fffdf2;
+            border: 1px dashed #c9b978;
+            border-radius: 6px;
+            margin: 10px 0;
+            cursor: pointer;
+            position: relative;
+        }
+        .elephant-note::after {
+            content: '▲ 点我抽出纸条';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 2px;
+            text-align: center;
+            font-size: 0.65rem;
+            color: #b09a55;
+        }
+        .elephant-note.show {
+            max-height: 220px;
+        }
+        .elephant-note.show::after { content: none; }
+        .elephant-note p {
+            padding: 14px;
+            margin: 0;
+            text-indent: 0;
+        }
+        #elephant-img { cursor: pointer; }
+
+        /* ===== 笔记本电脑（密码解锁） ===== */
+        .laptop {
+            width: 100%;
+            max-width: 360px;
+            margin: 14px auto;
+        }
+        .laptop-screen {
+            height: 230px;
+            background: #000;
+            border: 8px solid #222;
+            border-bottom-width: 12px;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .laptop-base {
+            height: 12px;
+            background: linear-gradient(#3a3a3a, #222);
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+        }
+        .lock-page {
+            height: 100%;
+            background: linear-gradient(160deg, #2b4a6f, #16222e);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #fff;
+        }
+        .lock-time { font-size: 2rem; font-weight: 300; letter-spacing: 2px; }
+        .lock-date { font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+        .lock-input {
+            width: 130px;
+            padding: 6px 10px;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+            text-align: center;
+            font-size: 0.9rem;
+            letter-spacing: 6px;
+            background: rgba(255,255,255,0.25);
+            color: #fff;
+        }
+        .lock-input::placeholder { color: rgba(255,255,255,0.6); letter-spacing: 0; font-size: 0.75rem; }
+        .lock-btn {
+            padding: 5px 22px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            color: #16222e;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .lock-btn:active { transform: scale(0.95); }
+        .lock-msg { font-size: 0.7rem; color: #ffb3b3; height: 14px; }
+        .shake { animation: lockShake 0.4s; }
+        @keyframes lockShake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .desktop-page {
+            height: 100%;
+            background: linear-gradient(160deg, #3a5a4a, #1c2b23);
+            display: flex;
+            flex-direction: column;
+        }
+        .desktop-icons {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 18px;
+            align-content: start;
+        }
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: #fff;
+        }
+        .di-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .desktop-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 12px;
+            font-size: 0.65rem;
+            color: #fff;
+            background: rgba(0,0,0,0.45);
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- 开场封面 -->
+    <div id="cover-screen">
+        <div class="cover-hint">点 按 屏 幕 进 入</div>
+    </div>
+
+    <!-- 顶部状态栏 (地点+进度) -->
+    <div id="status-bar">
+        <div class="location" id="location-display">未知</div>
+        <div class="progress" id="progress-display">1 / 7</div>
+    </div>
+
+    <!-- 任务栏 -->
+    <div id="task-bar"></div>
+
+    <!-- 剧情内容区 -->
+    <div id="content"></div>
+
+    <!-- 选项按钮区 -->
+    <div id="choices"></div>
+
+    <button id="music-toggle" title="背景音乐">🎵</button>
+
+    <!-- 线索栏按钮 -->
+    <div id="clue-btn">🔍 线索栏</div>
+
+    <!-- 线索弹窗 -->
+    <div id="clue-modal">
+        <div class="clue-content">
+            <div class="clue-header">
+                <h3>已收集线索</h3>
+                <button class="close-btn" onclick="toggleClues()">×</button>
+            </div>
+            <div id="clue-list"></div>
+        </div>
+    </div>
+</div>
+
+<audio id="bgm" src="歌曲.mp3" loop preload="auto"></audio>
+
+<script>
+    // --- 游戏状态 ---
+    const state = {
+        currentStep: 0,
+        location: "未知",
+        clues: [],
+        // 记录第一步中打开了哪些物品
+        step1_opened: { record: false, elephant: false, photo: false, phone: false, cup: false },
+        // 记录第二步
+        step2_opened: false,
+        // 记录第三步
+        step3_opened: false
+    };
+
+    // 游戏剧本数据
+    const script = [
+        {
+            id: 0,
+            location: "北京医院·病房",
+            task: "任务1：寻找线索（床头病历、小象、照片、手机）",
+            text: `
+                <p>我醒了，可我，不知道我是谁。</p>
+                <p>（旁边弹出任务栏）任务1：寻找线索</p>
+            `,
+            choices: [
+                { text: "1. 床头的病历", action: () => openItem(0, 'record') },
+                { text: "2. 床头的小象", action: () => openItem(0, 'elephant') },
+                { text: "3. 床头的照片", action: () => openItem(0, 'photo') },
+                { text: "4. 身边充着电的手机", action: () => openItem(0, 'phone') },
+                { text: "5. 去厕所", action: () => renderToilet() },
+                { text: "6. 继续剧情", action: () => nextStep(1), condition: () => state.step1_opened.record && state.step1_opened.elephant && state.step1_opened.photo && state.step1_opened.phone }
+            ]
+        },
+        {
+            id: 1,
+            location: "北京医院·病房",
+            task: "任务：等待医生检查",
+            text: `
+                <p>进来一个男人，他发现你醒了，看出你眼里的陌生，自我介绍到：</p>
+                <p>“我是土豆哥，你的助理，我喊医生来。”</p>
+                <p>医生来了之后，帮你做了检查，确认你是失忆了，说多看点之前有关的物件没准会好起来，会想起来一些，说后面检查一下就可以出院了。</p>
+                <p>自称土豆哥的人似乎很关心你，给你忙前忙后，办出院手续什么的，让你带上口罩出了门，门口有很多人拍你，你不想多说什么，走了，订了第二天的机票，你先回了宿舍..</p>
+            `,
+            choices: [
+                { text: "前往宿舍", action: () => nextStep(2) }
+            ]
+        },
+        {
+            id: 2,
+            location: "宿舍",
+            task: "任务3：调查屋子（睡衣、电脑、巧克力）",
+            text: `
+                <p>你回到宿舍，空无一人，你走上楼，看着标记着自己房间的门口走了进去，里面有很多顶帽子，还有你的玉桂狗睡衣，感觉自己很喜欢玉桂狗，蛮多玉桂狗的东西。</p>
+                <p>房间里还有你喜欢的球星的照片，以及你的红色腕带手表，你拿起来看了看，又放下了，总感觉对自己的羁绊很深。</p>
+            `,
+            choices: [
+                { text: "1. 玉桂狗睡衣", action: () => openItem(2, 'pajamas') },
+                { text: "2. 电脑", action: () => openItem(2, 'computer') },
+                { text: "3. 桌子上的巧克力", action: () => openItem(2, 'chocolate') },
+                { text: "4. 继续剧情", action: () => nextStep(3), condition: () => state.step3_opened }
+            ]
+        },
+        {
+            id: 3,
+            location: "宿舍",
+            task: "任务：前往哈尔滨",
+            text: `
+                <p>土豆哥通知你订了飞机票，要飞往哈尔滨，回到爸妈家让你休整一段时间，你心里暗暗讽刺不就是不想传播出来这段消息。</p>
+                <p>私人行程，不知道为什么还要这么多人拍你，你的心里让你不要冲动，只是往前走着，直到掩饰着，你才到了家。</p>
+                <p>你不理解，为什么要跟着你。</p>
+            `,
+            choices: [
+                { text: "出发前往哈尔滨", action: () => nextStep(4) }
+            ]
+        },
+        {
+            id: 4,
+            location: "哈尔滨·家",
+            task: "任务：寻找屋内线索（桌子、视频、翻盖手机）",
+            text: `
+                <p>到了家，看着掉着眼泪迎接你的女人和在旁边站着的男人，你觉得这可能是你的妈妈爸爸吧。</p>
+                <p>脑子里一闪而过的画面是什么...你不知道。但是你知道的是，你对眼前的女人和男人，有一种亲近感，内心涌上来一股委屈，你掉了一滴泪，女人焦急的上来问你怎么了，你下意识的说了句没事，这才发觉，你好像，是个报喜不报忧的人，好像还记得，你已经很久没回家了。</p>
+            `,
+            choices: [
+                { text: "1. 你的桌子", action: () => openItem(4, 'table') },
+                { text: "2. 妈妈传给你的视频", action: () => openItem(4, 'video') },
+                { text: "3. 屋子里的小型翻盖手机", action: () => openItem(4, 'flip_phone') },
+                { text: "4. 闪过脑海的画面", action: () => openItem(4, 'flashback') },
+                { text: "5. 继续剧情", action: () => nextStep(5), condition: () => state.step4_opened }
+            ]
+        },
+        {
+            id: 5,
+            location: "哈尔滨·家",
+            task: "任务：认识猫咪",
+            text: `
+                <p>从你进家开始，就有两只猫猫蹭着你的裤脚，据妈妈所说他俩一个叫复制，一个叫粘贴。头上条纹多的，是复制，头上没有条纹的，是粘贴。</p>
+                <p>听说你家还有一只猫叫老蔫，送去姥姥家了，还有一只猫叫妙妙，只不过已经去世了，你心里涌上来悲伤的感觉，你很在意这只猫猫，这是你内心的感受。</p>
+            `,
+            choices: [
+                { text: "休养一段时间，回公司", action: () => nextStep(6) }
+            ]
+        },
+        {
+            id: 6,
+            location: "公司·练习室",
+            task: "任务：去找队友攀谈",
+            text: `
+                <p>修养了一段时间你回了公司，你和队友们一起练舞，因为失忆，一切从0开始，你有点累，又害怕跟不上进度，只能比别人更加努力。</p>
+                <p>下课之后，你想去找队友聊一下，看看能不能回忆起一些，可是没有人理你，理了也只是礼貌性的攀谈，和假笑，你有点受够了，但也不能说什么，因为你知道有很多双眼睛在盯着你。</p>
+            `,
+            choices: [
+                { text: "找队友聊聊", action: () => nextStep(7) }
+            ]
+        },
+        {
+            id: 7,
+            location: "公司·练习室",
+            task: "任务：演唱会前交流",
+            text: `
+                <p>公司临时通知要开演唱会，你有点紧张，虽然经过了几日的练习，但是你感觉自己还是不够好。</p>
+                <p>你问：“你紧张吗？”</p>
+                <p><b>张极：</b>不紧张啊，我在忙你别来烦我行不行</p>
+                <p><b>苏新皓：</b>该紧张的人是你吧，我们都不用紧张</p>
+                <p><b>朱志鑫：</b>我不紧张，你好好练习就行</p>
+                <p><b>左航：</b>我在打瓦，不过我不紧张这不是很正常</p>
+                <p>经过聊天，你发现，可能你们的关系并没有表面上看着的那么好...</p>
+            `,
+            choices: [
+                { text: "登上演唱会舞台", action: () => nextStep(8) }
+            ]
+        },
+        {
+            id: 8,
+            location: "演唱会现场",
+            task: "任务：最后的谢幕",
+            text: `
+                <p>演唱会现场，你站在台上听着台下的喊声，看着支持你的人举着的灯牌和发光物，你回想起了一切，只有两票的时候，被孤立的时候，被全网骂的时候，也有粉丝为你撑腰的时候，你的应援和你的粉丝大声的喊你的名字，你想起来了一切。</p>
+                <p>在快结束时，你拿起话筒说：“谢谢你们成为我的98%”</p>
+                <p>队友们也才反应过来你想起来了，妈妈在台下哭的一塌糊涂，粉丝们因为你的好状态和发言也在哭，你发觉，世界上最珍贵的无异于是亲情与爱，爱是很伟大的，所以你要一步一走，珍视你获得的所有爱。</p>
+                <p>谢谢你们游玩，泽禹有你们很幸运。</p>
+            `,
+            choices: [
+                { text: "阅读泽禹的小作文", action: () => nextStep(9) }
+            ]
+        },
+        {
+            id: 9,
+            location: "尾声",
+            task: "",
+            text: `
+                <div style="background: rgba(46,204,113,0.1); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary-green);">
+                    <h3 style="color: var(--primary-green); text-align: center; margin-bottom: 10px;">结 尾 的 泽 禹 的 小 作 文</h3>
+                    <p>一路走来，我常常觉得自己是一个超级幸运的人。</p>
+                    <p>首先最想感谢的，是我的妈妈爸爸。是你们无条件的包容、支持与偏爱，托起了我所有的热爱和梦想。从我喜欢上唱歌的那一刻开始，你们就一直做我最坚实的后盾，尊重我的选择，陪着我长大，陪着我奔赴每一场未知的山海。不管我奔波忙碌、奔赴舞台，还是偶尔疲惫迷茫，回头永远是你们温暖的港湾。谢谢你们倾尽所有，护我岁岁平安，让我可以毫无顾虑地追逐自己的光。</p>
+                    <p>然后，我想好好谢谢我的小禹宙。</p>
+                    <p>谢谢一直以来坚定站在我身边、默默陪着我的每一个你们。我的小禹宙，是我漫长追梦路上最温柔、最坚定的底气。我知道，我的每一次舞台、每一首歌、每一次成长，背后都是你们日复一日的喜欢、支持和奔赴。你们会为我的进步开心，会为我的努力动容，会耐心陪着我慢慢长大，见证我从懵懂少年一步步变得更加成熟、更加优秀。</p>
+                    <p>我从来都知道，不是我自带光芒，是千千万万个你们，把星光汇聚起来，照亮了我的前路。</p>
+                    <p>很幸运，我的热爱有人回应，我的坚持有人看见，我的成长有人陪伴。我真的超级超级爱我的小禹宙。这份双向奔赴的温柔，是我青春里最珍贵、最无可替代的宝藏。</p>
+                    <p>未来的路还很长，我会带着妈妈爸爸的期许，带着小禹宙所有的偏爱与期待，继续踏实前行。我会好好唱歌、好好成长、好好奔赴每一场舞台。</p>
+                    <p>感恩父母予我烟火人间，感谢小禹宙予我漫天星光。</p>
+                    <p>往后岁岁年年，我会一直带着热爱与温柔，和我的家人、和我的小禹宙，双向奔赴，一直走下去。</p>
+                    <p style="text-align: right; margin-top: 15px;">——Aaa.爱你的小宝</p>
+                </div>
+            `,
+            choices: [
+                { text: "阅读作者的信", action: () => nextStep(10) }
+            ]
+        },
+        {
+            id: 10,
+            location: "尾声",
+            task: "",
+            text: `
+                <div style="background: rgba(46,204,113,0.1); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary-green);">
+                    <h3 style="color: var(--primary-green); text-align: center; margin-bottom: 10px;">作 者 的 信</h3>
+                    <p>感谢大家的游玩也感谢大家喜欢我做的网页，我会一点点进步给大家带来更好的游戏体验。</p>
+                    <p>在这里我要提醒大家，要好好吃饭天天开心，不要emo！小宝想看你开心的样子，张泽禹会一直爱你。</p>
+                    <p>大家一起陪泽禹走下去好不好，有你们我很幸运。</p>
+                </div>
+            `,
+            choices: [
+                { text: "重新开始", action: () => location.reload() }
+            ]
+        }
+    ];
+
+    // --- DOM 元素 ---
+    const contentEl = document.getElementById('content');
+    const choicesEl = document.getElementById('choices');
+    const locationEl = document.getElementById('location-display');
+    const progressEl = document.getElementById('progress-display');
+    const taskBarEl = document.getElementById('task-bar');
+    const clueModal = document.getElementById('clue-modal');
+    const clueListEl = document.getElementById('clue-list');
+    const coverScreen = document.getElementById('cover-screen');
+
+    // --- 初始化 ---
+    const bgm = document.getElementById('bgm');
+    const musicBtn = document.getElementById('music-toggle');
+    let entered = false;
+    let bgmStarted = false;
+
+    function init() {
+        // 开场封面：3秒后自动进入，或点按提前进入
+        const enter = () => {
+            if (entered) return;
+            entered = true;
+            coverScreen.classList.add('hidden');
+            renderStep(0);
+        };
+        const coverTimer = setTimeout(enter, 3000);
+        coverScreen.addEventListener('click', () => { clearTimeout(coverTimer); enter(); });
+
+        // BGM 手动开关
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (bgm.paused) { bgm.play().catch(()=>{}); } else { bgm.pause(); }
+        });
+        bgm.addEventListener('play', () => { musicBtn.classList.add('playing'); musicBtn.innerText = '🎶'; });
+        bgm.addEventListener('pause', () => { musicBtn.classList.remove('playing'); musicBtn.innerText = '🎵'; });
+
+        // 手机/浏览器自动播放策略：首次触摸屏幕时自动响起 BGM
+        document.addEventListener('pointerdown', () => {
+            if (bgmStarted) return;
+            bgmStarted = true;
+            bgm.play().catch(() => { bgmStarted = false; });
+        });
+    }
+
+    // --- 渲染剧情 ---
+    function renderStep(index) {
+        const step = script[index];
+        state.currentStep = index;
+        
+        // 更新地点
+        state.location = step.location;
+        locationEl.innerText = state.location;
+        progressEl.innerText = `${index + 1} / ${script.length}`;
+
+        // 渲染任务栏
+        if (step.task && step.task !== "") {
+            taskBarEl.innerText = step.task;
+            taskBarEl.classList.add('active');
+        } else {
+            taskBarEl.classList.remove('active');
+        }
+
+        // 渲染文本
+        contentEl.innerHTML = step.text;
+        contentEl.scrollTop = 0; // 滚动到顶部
+
+        // 渲染选项
+        choicesEl.innerHTML = '';
+        let hasAvailableChoice = false;
+        
+        step.choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = choice.text;
+            
+            // 如果有条件判断，检查是否满足
+            if (choice.condition && !choice.condition()) {
+                btn.classList.add('locked');
+            } else {
+                hasAvailableChoice = true;
+            }
+            
+            btn.onclick = () => {
+                if (choice.condition && !choice.condition()) return;
+                choice.action();
+            };
+            choicesEl.appendChild(btn);
+        });
+
+        // 如果当前步骤有子选项且未完成，可以给个提示，或者不做处理
+    }
+
+    // --- 厕所场景（漱口杯在这里） ---
+    function renderToilet() {
+        locationEl.innerText = '北京医院·厕所';
+        taskBarEl.classList.remove('active');
+        contentEl.innerHTML = '<div id="item-view"></div>';
+        contentEl.scrollTop = 0;
+
+        choicesEl.innerHTML = '';
+        [
+            { text: '1. 漱口杯', action: () => openItem(0, 'cup') },
+            { text: '2. 镜子里的自己', action: () => openItem(0, 'mirror') },
+            { text: '3. 返回病房', action: () => renderStep(0) }
+        ].forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = choice.text;
+            btn.onclick = choice.action;
+            choicesEl.appendChild(btn);
+        });
+    }
+
+    // --- 进入下一步 ---
+    function nextStep(index) {
+        renderStep(index);
+    }
+
+    // --- 打开物品（线索）逻辑 ---
+    function openItem(stepIndex, itemKey) {
+        // 标记已打开
+        if (stepIndex === 0) state.step1_opened[itemKey] = true;
+        if (stepIndex === 2) state.step3_opened = true;
+        if (stepIndex === 4) state.step4_opened = true;
+
+        let itemText = "";
+        let clueTitle = "";
+
+        // 根据步骤和物品生成文本
+        if (stepIndex === 0) {
+            switch (itemKey) {
+                case 'record':
+                    itemText = `
+                        <img class="story-img" src="无标题1231_20261004202000.png" alt="北京医院诊断证明">
+                    `;
+                    clueTitle = "【诊断证明】因车祸导致颅脑损伤，可能失忆。";
+                    break;
+                case 'elephant':
+                    itemText = `
+                        <img class="story-img" id="elephant-img" src="无标题1229_20261004202401.png" alt="床头小象" style="background:#f2f2f2; padding:12px;" onclick="pullElephantNote()">
+                        <p>小象里面有一张留言卡：</p>
+                        <div class="elephant-note" id="elephant-note" onclick="pullElephantNote()">
+                            <p style="text-align: center; color: #4a7c59;">“大禹，想家了随时回来，我和你爸爸等着你”<br>——爱你的妈妈</p>
+                        </div>
+                    `;
+                    clueTitle = "【小象留言卡】妈妈的留言：“大禹，想家了随时回来...”";
+                    break;
+                case 'photo':
+                    itemText = `
+                        <img class="story-img" src="mmexport1791116957344_edit_1463025830799151.jpg" alt="舞台照片">
+                        <p>好像有很多人爱你。</p>
+                    `;
+                    clueTitle = "【舞台照片】有很多人爱你。";
+                    break;
+                case 'phone':
+                    itemText = `
+                        <div class="phone-mock">
+                            <div class="phone-screen">
+                                <div class="phone-status"><span>21:30</span><span>📶 🔋</span></div>
+                                <div class="pm-page pm-home-page">
+                                    <div class="pm-apps">
+                                        <div class="pm-app" data-app="wechat">
+                                            <div class="pm-app-icon" style="background:#1aad19">💬</div>
+                                            <span>微信</span>
+                                        </div>
+                                        <div class="pm-app" data-app="sms">
+                                            <div class="pm-app-icon" style="background:#34c759">✉️</div>
+                                            <span>短信</span>
+                                        </div>
+                                        <div class="pm-app" data-app="call">
+                                            <div class="pm-app-icon" style="background:#5b7c99">📞</div>
+                                            <span>电话</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    clueTitle = "【手机】微信、短信、电话。";
+                    break;
+                case 'cup':
+                    itemText = `
+                        <img class="story-img" src="retouch_2026100520233353.png" alt="床头漱口杯">
+                    `;
+                    clueTitle = "【漱口杯】床头的漱口杯。";
+                    break;
+                case 'mirror':
+                    itemText = `
+                        <img class="story-img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=A%20large%20mirror%20mounted%20on%20a%20white%20tiled%20hospital%20bathroom%20wall%20above%20a%20ceramic%20sink%2C%20clean%20reflective%20surface%2C%20cold%20fluorescent%20lighting%2C%20minimalist%20realistic%20photo&image_size=portrait_4_3" alt="镜子">
+                    `;
+                    clueTitle = "【镜子】镜子里的人，熟悉又陌生。";
+                    break;
+            }
+        } else if (stepIndex === 2) {
+            switch (itemKey) {
+                case 'pajamas':
+                    itemText = `
+                        <img class="story-img" src="无标题1232_20261005204305.png" alt="玉桂狗睡衣">
+                        <p>玉桂狗睡衣：上面有洗衣粉的清香味，应该是刚刚洗过。</p>
+                    `;
+                    clueTitle = "【玉桂狗睡衣】刚洗过，有清香味。";
+                    break;
+                case 'computer':
+                    itemText = `
+                        <div class="laptop">
+                            <div class="laptop-screen" id="laptop-screen">
+                                <div class="lock-page">
+                                    <div class="lock-time">22:47</div>
+                                    <div class="lock-date">10月4日 星期六</div>
+                                    <input class="lock-input" id="lock-input" type="password" inputmode="numeric" maxlength="4" placeholder="输入密码" onkeydown="if(event.key==='Enter')unlockComputer()">
+                                    <button class="lock-btn" onclick="unlockComputer()">解锁</button>
+                                    <div class="lock-msg" id="lock-msg"></div>
+                                </div>
+                            </div>
+                            <div class="laptop-base"></div>
+                        </div>
+                        <p>电脑：密码是0430，要输入密码才可以打开，前面是不显示密码是什么的，打开电脑是一些小游戏什么的。</p>
+                    `;
+                    clueTitle = "【电脑】密码是0430，里面是一些小游戏。";
+                    break;
+                case 'chocolate':
+                    itemText = `
+                        <p>巧克力：好像很喜欢吃甜食，屋子里有很多，但是怎么依稀记得一句话，哥们不吃甜食。</p>
+                        <div class="audio-file" id="audio-file" onclick="toggleRecordAudio()">
+                            <span style="font-size: 1.5rem; margin-right: 10px;">🎵</span>
+                            <div>
+                                <div style="font-size: 0.8rem;">lv_0_20261004230616.mp3</div>
+                                <div style="font-size: 0.7rem; color: #888;" id="audio-hint">2.57 MB · 点按播放</div>
+                            </div>
+                            <span id="audio-icon" style="margin-left:auto; font-size:1.2rem;">▶</span>
+                        </div>
+                        <audio id="record-audio" src="哥们不吃甜食.mp3" preload="auto"></audio>
+                        <p>好像回忆起了一些不好的事件...在宿舍被堵门，门锁都掉了。</p>
+                    `;
+                    clueTitle = "【巧克力】不喜欢吃甜食，回忆起宿舍被堵门的不好的事件。";
+                    break;
+            }
+        } else if (stepIndex === 4) {
+            switch (itemKey) {
+                case 'table':
+                    itemText = `
+                        <img class="story-img" src="Screenshot_20261005_195725_com.sina.weibo_edit_15.jpg" alt="你的桌面">
+                        <p>你的桌面：全是你小时候的照片，看的出来你的家里人很爱你，桌子上摆着一个个小摆件，你是一个很有童真的人，一个个片段又一闪而过。</p>
+                    `;
+                    clueTitle = "【桌面】全是小时候的照片，家里人很爱你。";
+                    break;
+                case 'video':
+                    itemText = `
+                        <div class="video-box">
+                            <video id="mom-video" src="喊妈妈_兼容.mp4" poster="Screenshot_20261005_195752_com.sina.weibo_edit_15.jpg" controls playsinline preload="metadata"></video>
+                            <p class="video-tip" id="video-tip" style="display:none;">未找到视频文件 喊妈妈_兼容.mp4，把它放到本 html 同一文件夹即可播放</p>
+                        </div>
+                        <p style="text-align: center; font-size: 0.8rem; color: #888; text-indent:0;">lv_0_20261005200748.mp4 &nbsp; 00:30</p>
+                        <p>你小时候很可爱，叫着妈妈，冲着妈妈伸出手要抱抱，看得出来很幸福。</p>
+                    `;
+                    clueTitle = "【视频】小时候叫妈妈，伸手要抱抱。";
+                    break;
+                case 'flip_phone':
+                    itemText = `
+                        <img class="story-img" src="Screenshot_20261005_195752_com.sina.weibo_edit_15.jpg" alt="翻盖手机里的画面">
+                        <p>里面存着很多游戏，联系人列表里是妈妈爸爸和太爷爷，原来你还有一个太爷爷，隐约记得太爷爷是当兵的，从小就教育你要爱国，所以你被养成一个很爱国的小孩，也很尊敬妈妈爸爸。</p>
+                        <p>原来你有个很幸福的家庭，是很幸福的小孩。</p>
+                    `;
+                    clueTitle = "【翻盖手机】联系人里有太爷爷，受他影响很爱国。";
+                    break;
+                case 'flashback':
+                    itemText = `
+                        <img class="story-img" src="img-17912006798197427e4bec814481ab7f210aef7d60a6d.jpg" alt="闪回画面">
+                    `;
+                    clueTitle = "【闪回画面】脑子里闪过的画面。";
+                    break;
+            }
+        }
+
+        // 插入到唯一的物品展示区：点一个出现一个，再点别的，上一个消失
+        let view = document.getElementById('item-view');
+        if (!view) {
+            view = document.createElement('div');
+            view.id = 'item-view';
+            contentEl.appendChild(view);
+        }
+        view.innerHTML = `<hr style="border-color: #444; margin: 20px 0;">` + itemText;
+        initPhoneMock(); // 若刚插入的是手机，初始化对话列表
+        bindMedia(); // 绑定刚插入的音频/视频
+        contentEl.scrollTop = contentEl.scrollHeight; // 滚动到底部
+
+        // 添加线索
+        if (!state.clues.includes(clueTitle)) {
+            state.clues.push(clueTitle);
+            updateClueList();
+        }
+
+        // 重新渲染选项，以更新条件解锁状态
+        const currentStepData = script[state.currentStep];
+        choicesEl.innerHTML = '';
+        currentStepData.choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = choice.text;
+            if (choice.condition && !choice.condition()) {
+                btn.classList.add('locked');
+            }
+            btn.onclick = () => {
+                if (choice.condition && !choice.condition()) return;
+                choice.action();
+            };
+            choicesEl.appendChild(btn);
+        });
+    }
+
+    // ===== 小象肚子里的纸条 =====
+    function pullElephantNote() {
+        const note = document.getElementById('elephant-note');
+        if (note) note.classList.toggle('show');
+    }
+
+    // ===== 电脑密码解锁（密码 0430） =====
+    function unlockComputer() {
+        const input = document.getElementById('lock-input');
+        const msg = document.getElementById('lock-msg');
+        const screen = document.getElementById('laptop-screen');
+        if (!input || !screen) return;
+        if (input.value === '0430') {
+            screen.innerHTML = `
+                <div class="desktop-page">
+                    <div class="desktop-icons">
+                        <div class="desktop-icon"><div class="di-img">💣</div><span>扫雷</span></div>
+                        <div class="desktop-icon"><div class="di-img">🃏</div><span>纸牌</span></div>
+                        <div class="desktop-icon"><div class="di-img">🐍</div><span>贪吃蛇</span></div>
+                        <div class="desktop-icon"><div class="di-img">🧩</div><span>拼图</span></div>
+                        <div class="desktop-icon"><div class="di-img">🎮</div><span>小游戏</span></div>
+                        <div class="desktop-icon"><div class="di-img">📁</div><span>我的文件</span></div>
+                    </div>
+                    <div class="desktop-bar"><span>⊞ 开始</span><span>22:47</span></div>
+                </div>`;
+        } else {
+            msg.innerText = '密码错误，再想想';
+            input.value = '';
+            input.classList.add('shake');
+            setTimeout(() => input.classList.remove('shake'), 400);
+        }
+    }
+
+    // ===== 音频 / 视频绑定 =====
+    function toggleRecordAudio() {
+        const audio = document.getElementById('record-audio');
+        if (!audio) return;
+        if (audio.paused) {
+            bgm.pause(); // 暂停 BGM，避免重叠
+            audio.play().catch(() => {});
+        } else {
+            audio.pause();
+        }
+    }
+
+    function bindMedia() {
+        const audio = document.getElementById('record-audio');
+        if (audio && !audio.dataset.bound) {
+            audio.dataset.bound = '1';
+            const icon = document.getElementById('audio-icon');
+            const hint = document.getElementById('audio-hint');
+            audio.addEventListener('play', () => { if (icon) icon.innerText = '⏸'; if (hint) hint.innerText = '播放中 · 点按暂停'; });
+            audio.addEventListener('pause', () => { if (icon) icon.innerText = '▶'; if (hint) hint.innerText = '已暂停 · 点按播放'; });
+            audio.addEventListener('ended', () => { if (icon) icon.innerText = '▶'; if (hint) hint.innerText = '2.57 MB · 点按播放'; bgm.play().catch(()=>{}); });
+            audio.addEventListener('error', () => { if (hint) hint.innerText = '未找到录音文件，把 哥们不吃甜食.mp3 放到本 html 同一文件夹即可播放'; });
+        }
+        const video = document.getElementById('mom-video');
+        if (video && !video.dataset.bound) {
+            video.dataset.bound = '1';
+            const tip = document.getElementById('video-tip');
+            video.addEventListener('error', () => { if (tip) tip.style.display = 'block'; });
+            video.addEventListener('play', () => { bgm.pause(); }); // 播放视频时暂停 BGM
+        }
+    }
+
+    // ===== 真实手机：微信对话列表，逐个点开 =====
+    // l=对方发来  r=自己发出
+    const chats = [
+        { name: 'STF', avatar: '🧑‍💼', color: '#5b7c99', msgs: [
+            ['l', '这个节目肯定不可能，你们前期要注重团体发展，不可能让你单独去上。'],
+            ['r', '收到']
+        ]},
+        { name: '最爱的妈妈', avatar: '👩', color: '#d98ba6', msgs: [
+            ['l', '大禹怎么样了，醒了给妈妈回个消息，我和你爸爸很担心你，我们看见热搜上你的消息了，没事吧，我和爸爸和复制粘贴和老蔫在家里等你。']
+        ]},
+        { name: '我的老父亲', avatar: '👨', color: '#7a8fa3', msgs: [
+            ['l', '大禹，爸爸知道小时候对你很严厉，快回家吧，我和你妈妈在家里等你。']
+        ]},
+        { name: '同学', avatar: '🧑', color: '#c2a36b', msgs: [
+            ['l', '在重庆要注意安全，我们等着你回来！'],
+            ['r', '好的谢谢'],
+            ['l', '张泽禹同学祝你长红！'],
+            ['r', '谢谢你！']
+        ]},
+        { name: '尚雯婕前辈', avatar: '🎤', color: '#9c7bb0', msgs: [
+            ['l', '泽禹你没事吧，看到热搜了，有空记得回个信息。']
+        ]}
+    ];
+
+    // ===== 短信内容（陌生号码发来的辱骂信息，手机屏幕画面形式） =====
+    const smsList = [
+        { num: '陌生号码 138****2207', text: '长得跟个芒果似的也好意思当偶像？回去照照镜子吧，别出来吓人了。' },
+        { num: '陌生号码 159****8831', text: '就你这样的还站舞台上？跳成那样拖累整个团，劝你早点退团，别占着位置。' },
+        { num: '陌生号码 187****0465', text: '你爸妈是怎么教出你这种东西的？一家人都一个样，也好意思出来见人。' },
+        { num: '陌生号码 136****5519', text: '天天装可怜博同情，恶不恶心？粉丝都被你骗了吧。' },
+        { num: '陌生号码 150****7726', text: '你的卡是我偷的，怎么着？活该。以后小心点。' },
+        { num: '陌生号码 188****3342', text: '出车祸了？怎么没把你撞严重点，省得再出来碍眼。' },
+        { num: '陌生号码 177****9908', text: '看见你就烦，滚出娱乐圈行不行，没人想看见你这张脸。' }
+    ];
+
+    // ===== 通话记录 =====
+    const callList = [
+        { name: '陌生号码 138****2207', icon: '❓', color: '#999' },
+        { name: '陌生号码 159****8831', icon: '❓', color: '#999' },
+        { name: '士大夫', icon: '🧑‍💼', color: '#5b7c99' },
+        { name: '陌生号码 187****0465', icon: '❓', color: '#999' },
+        { name: '陌生号码 136****5519', icon: '❓', color: '#999' },
+        { name: '老板', icon: '💼', color: '#7a7a7a' },
+        { name: '陌生号码 150****7726', icon: '❓', color: '#999' },
+        { name: '陌生号码 188****3342', icon: '❓', color: '#999' },
+        { name: '陌生号码 177****9908', icon: '❓', color: '#999' },
+        { name: '陌生号码 133****6614', icon: '❓', color: '#999' }
+    ];
+
+    function initPhoneMock() {
+        const screen = document.querySelector('.phone-screen');
+        if (!screen || screen.dataset.inited) return;
+        screen.dataset.inited = '1';
+
+        // 主屏图标点击进入各 App
+        screen.querySelectorAll('.pm-app').forEach(app => {
+            app.onclick = () => {
+                const type = app.dataset.app;
+                if (type === 'wechat') showPage(buildWechatList(screen));
+                if (type === 'sms') showPage(buildSmsList(screen));
+                if (type === 'call') showPage(buildCallList(screen));
+            };
+        });
+    }
+
+    function showPage(page) {
+        void page.offsetWidth;
+        page.classList.add('show');
+    }
+
+    function makePage(screen, id, headerHTML, bodyHTML) {
+        let page = screen.querySelector('#' + id);
+        if (!page) {
+            page = document.createElement('div');
+            page.className = 'pm-page pm-sub-page';
+            page.id = id;
+            page.innerHTML = `<div class="pm-app-header">${headerHTML}</div>${bodyHTML}`;
+            screen.appendChild(page);
+            page.querySelector('.pm-back').onclick = () => page.classList.remove('show');
+        }
+        return page;
+    }
+
+    // ----- 微信对话列表 -----
+    function buildWechatList(screen) {
+        const page = makePage(screen, 'pm-wechat-list',
+            '<span class="pm-back">‹</span><span>微信</span>',
+            `<div class="pm-sys-note">复制粘贴和老蔫的近况 · 它们是猫猫</div><div class="pm-chat-list"></div>`);
+
+        const list = page.querySelector('.pm-chat-list');
+        if (!list.dataset.inited) {
+            list.dataset.inited = '1';
+            chats.forEach((c, i) => {
+                const last = c.msgs[c.msgs.length - 1];
+                const row = document.createElement('div');
+                row.className = 'pm-row';
+                row.innerHTML = `
+                    <div class="pm-avatar" style="background:${c.color}">${c.avatar}</div>
+                    <div class="pm-row-text">
+                        <div class="pm-name">${c.name}</div>
+                        <div class="pm-preview">${last[0] === 'r' ? '我: ' : ''}${last[1]}</div>
+                    </div>`;
+                row.onclick = () => openChat(i, screen);
+                list.appendChild(row);
+            });
+        }
+        return page;
+    }
+
+    // ----- 短信列表 -----
+    function buildSmsList(screen) {
+        const page = makePage(screen, 'pm-sms-list',
+            '<span class="pm-back">‹</span><span>短信</span>',
+            `<div class="pm-chat-list"></div>`);
+
+        const list = page.querySelector('.pm-chat-list');
+        if (!list.dataset.inited) {
+            list.dataset.inited = '1';
+            smsList.forEach((s, i) => {
+                const row = document.createElement('div');
+                row.className = 'pm-row';
+                row.innerHTML = `
+                    <div class="pm-avatar" style="background:#888">❓</div>
+                    <div class="pm-row-text">
+                        <div class="pm-name">${s.num}</div>
+                        <div class="pm-preview">${s.text}</div>
+                    </div>`;
+                row.onclick = () => openSms(i, screen);
+                list.appendChild(row);
+            });
+        }
+        return page;
+    }
+
+    function openSms(idx, screen) {
+        const s = smsList[idx];
+        const page = makePage(screen, 'pm-sms-detail-' + idx,
+            `<span class="pm-back">‹</span><span>${s.num}</span>`,
+            `<div class="pm-bubbles">
+                <div class="pm-b l">${s.text}</div>
+            </div>`);
+        showPage(page);
+    }
+
+    // ----- 通话记录 -----
+    function buildCallList(screen) {
+        const page = makePage(screen, 'pm-call-list',
+            '<span class="pm-back">‹</span><span>通话记录</span>',
+            `<div class="pm-chat-list"></div>`);
+
+        const list = page.querySelector('.pm-chat-list');
+        if (!list.dataset.inited) {
+            list.dataset.inited = '1';
+            callList.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'pm-row';
+                row.innerHTML = `
+                    <div class="pm-avatar" style="background:${c.color}">${c.icon}</div>
+                    <div class="pm-row-text">
+                        <div class="pm-name">${c.name}</div>
+                        <div class="pm-preview">📞 未接来电</div>
+                    </div>`;
+                list.appendChild(row);
+            });
+        }
+        return page;
+    }
+
+    function openChat(idx, screen) {
+        screen = screen || document.querySelector('.phone-screen');
+        let page = screen.querySelector('#pm-chat-' + idx);
+        const c = chats[idx];
+
+        if (!page) {
+            page = document.createElement('div');
+            page.className = 'pm-page pm-sub-page';
+            page.id = 'pm-chat-' + idx;
+            page.innerHTML = `
+                <div class="pm-app-header"><span class="pm-back">‹</span><span>${c.name}</span></div>
+                <div class="pm-bubbles">
+                    ${c.msgs.map(m => `<div class="pm-b ${m[0]}">${m[1]}</div>`).join('')}
+                </div>`;
+            screen.appendChild(page);
+            page.querySelector('.pm-back').onclick = () => page.classList.remove('show');
+        }
+
+        showPage(page);
+        const bubbles = page.querySelector('.pm-bubbles');
+        if (bubbles) bubbles.scrollTop = bubbles.scrollHeight;
+    }
+
+    // --- 线索栏逻辑 ---
+    function toggleClues() {
+        clueModal.classList.toggle('active');
+    }
+
+    function updateClueList() {
+        clueListEl.innerHTML = '';
+        if (state.clues.length === 0) {
+            clueListEl.innerHTML = '<p style="color: #888; text-align: center;">暂无收集到的线索</p>';
+            return;
+        }
+        state.clues.forEach((clue, index) => {
+            const div = document.createElement('div');
+            div.className = 'clue-item';
+            div.innerText = `${index + 1}. ${clue}`;
+            clueListEl.appendChild(div);
+        });
+    }
+
+    // 点击弹窗外部关闭
+    clueModal.addEventListener('click', (e) => {
+        if (e.target === clueModal) {
+            toggleClues();
+        }
+    });
+
+    // 启动游戏
+    init();
+
+</script>
+</body>
+</html>
